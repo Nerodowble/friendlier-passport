@@ -1,11 +1,38 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+
+import { useAuth } from "@/contexts/AuthContext";
+import { Navigate } from "react-router-dom";
+import { AuthCard } from "@/components/auth/AuthCard";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Index = () => {
+  const { user } = useAuth();
+
+  // If user is already logged in, redirect to dashboard
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-100">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold mb-4">Welcome to Your Blank App</h1>
-        <p className="text-xl text-gray-600">Start building your amazing project here!</p>
+    <div className="container relative min-h-screen flex items-center justify-center">
+      <div className="lg:p-8">
+        <AuthCard
+          title="Welcome"
+          description="Please sign in to your account or create a new one"
+        >
+          <div className="flex flex-col gap-4">
+            <Link to="/auth/sign-in">
+              <Button className="w-full" variant="default">
+                Sign In
+              </Button>
+            </Link>
+            <Link to="/auth/sign-up">
+              <Button className="w-full" variant="outline">
+                Create Account
+              </Button>
+            </Link>
+          </div>
+        </AuthCard>
       </div>
     </div>
   );
