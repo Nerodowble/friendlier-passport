@@ -1,8 +1,7 @@
-
 import { createContext, useContext, useState, useEffect } from "react";
 import { User, AuthError } from "@supabase/supabase-js";
 import { toast } from "@/components/ui/use-toast";
-import { supabase } from "@/lib/supabase";
+import { supabase, getSupabaseClient } from "@/lib/supabase";
 
 interface AuthContextType {
   user: User | null;
@@ -19,19 +18,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check active sessions and sets the user
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+    const initSupabase = async () => {
+      try {
+        await getSupabaseClient();
+        
+        // Check active sessions and sets the user
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+        
+        // Listen for changes on auth state
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+          setUser(session?.user ?? null);
+          setLoading(false);
+        });
 
-    // Listen for changes on auth state (sign in, sign out, etc.)
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-      setLoading(false);
-    });
+        return () => subscription.unsubscribe();
+      } catch (error) {
+        console.error('Failed to initialize Supabase:', error);
+        setLoading(false);
+      }
+    };
 
-    return () => subscription.unsubscribe();
+    initSupabase();
   }, []);
 
   const signUp = async (email: string, password: string) => {
